@@ -18,7 +18,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 /** Task 2: aggregate Task1 outputs by (year, tag) and (optionally) get Top-K per year. */
 public class Task2YearlyTagAgg {
 
-    // 写死的 reducer 个数
     private static final int AGG_REDUCES  = 60;
     private static final int TOPK_REDUCES = 20;
 
@@ -66,7 +65,6 @@ public class Task2YearlyTagAgg {
             double avgV = c == 0 ? 0.0 : (double) v / c;
             double avgS = c == 0 ? 0.0 : (double) s / c;
             double avgA = c == 0 ? 0.0 : (double) a / c;
-            // 输出列：year tag count totalViews totalScore totalAnswers avgViews avgScore avgAnswers
             outVal.set(c + "\t" + v + "\t" + s + "\t" + a + "\t" +
                        String.format("%.6f", avgV) + "\t" +
                        String.format("%.6f", avgS) + "\t" +
@@ -128,7 +126,6 @@ public class Task2YearlyTagAgg {
         }
         String mode = args[0];
         Configuration conf = new Configuration();
-        // 让 reducer 更早启动
         conf.setFloat("mapreduce.job.reduce.slowstart.completedmaps", 0.20f);
 
         if ("agg".equalsIgnoreCase(mode)) {
@@ -140,7 +137,7 @@ public class Task2YearlyTagAgg {
             job.setMapOutputValueClass(StatsWritable.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            job.setNumReduceTasks(AGG_REDUCES); // 写死 60
+            job.setNumReduceTasks(AGG_REDUCES);
             FileInputFormat.addInputPath(job, new Path(args[1]));
             FileOutputFormat.setOutputPath(job, new Path(args[2]));
             System.exit(job.waitForCompletion(true) ? 0 : 1);
@@ -155,7 +152,7 @@ public class Task2YearlyTagAgg {
             job.setMapOutputValueClass(Text.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            job.setNumReduceTasks(TOPK_REDUCES); // 写死 20
+            job.setNumReduceTasks(TOPK_REDUCES);
             FileInputFormat.addInputPath(job, new Path(args[1]));
             FileOutputFormat.setOutputPath(job, new Path(args[2]));
             System.exit(job.waitForCompletion(true) ? 0 : 1);

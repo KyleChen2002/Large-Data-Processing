@@ -33,7 +33,6 @@ public class Task1TagEmit {
 
         private static String unescapeBasic(String s) {
             if (s == null) return null;
-            // 够用即可：支持 &lt; &gt; &amp; （Stack Exchange dumps 的常见最小集）
             return s.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
         }
 
@@ -44,20 +43,17 @@ public class Task1TagEmit {
             String u = unescapeBasic(raw).trim();
 
             if (u.indexOf('<') >= 0 && u.indexOf('>') >= 0) {
-                // 形如：<wcf><security><spn>
                 Matcher m = ANGLED.matcher(u);
                 while (m.find()) {
                     String t = m.group(1).trim().toLowerCase();
                     if (!t.isEmpty()) res.add(t);
                 }
             } else if (u.indexOf('|') >= 0) {
-                // 形如：|wcf|security|spn|
                 for (String p : u.split("\\|")) {
                     String t = p.trim().toLowerCase();
                     if (!t.isEmpty()) res.add(t);
                 }
             } else {
-                // 兜底：单个 tag
                 String t = u.toLowerCase();
                 if (!t.isEmpty()) res.add(t);
             }
@@ -68,10 +64,9 @@ public class Task1TagEmit {
         protected void map(LongWritable key, Text value, Context ctx) throws IOException, InterruptedException {
             String line = value.toString().trim();
             if (line.isEmpty()) return;
-            if (line.charAt(0) != '<') return;          // 只处理 <row .../>
+            if (line.charAt(0) != '<') return;
             if (line.indexOf("<row ") != 0 && line.indexOf("<row") != 0) return;
 
-            // 只保留问题（PostTypeId=1）
             String postType = getAttr(line, "PostTypeId");
             if (!"1".equals(postType)) return;
 
@@ -95,7 +90,6 @@ public class Task1TagEmit {
             List<String> tags = parseTags(rawTags);
             if (tags.isEmpty()) return;
 
-            // 输出格式：tag year postId score answerCount viewCount
             for (String t : tags) {
                 out.set(t + " " + year + " " + id + " " + score + " " + ans + " " + views);
                 ctx.write(NullWritable.get(), out);
@@ -118,9 +112,8 @@ public class Task1TagEmit {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
-        // 默认 TextInputFormat / TextOutputFormat 足够
-        FileInputFormat.addInputPath(job, new Path(args[0]));   // 支持 S3 路径
-        FileOutputFormat.setOutputPath(job, new Path(args[1])); // 必须不存在
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
